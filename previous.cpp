@@ -2,14 +2,17 @@
 #include <cmath>
 #include <sstream>
 
+using namespace std;
+
 #include <SFML/Graphics.hpp>
 
-#define N 19 //numbers os quads
+#define N 25 //numbers os quads
 #define X 40 //lenght of side
 
 int score = 0;
 int fail = 0;
-
+int diss = 0;
+//#include "Character.h"
 #ifndef Character_h
 #define Character_h
 
@@ -30,11 +33,11 @@ public:
 
 #endif /* Character_h */
 
-
+//#include "Map.h"
 #ifndef Map_h
 #define Map_h
 
-int MAP[N][N] = {
+int MAP0[N][N] = {
     {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
     {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
     {1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1},
@@ -80,19 +83,138 @@ int MAP[N][N] = {
 
 class Map
 {
-    int map[N][N];
 public:
+    const int wall = 1, pass = 0;
+    const int height = N, width = N;
+    
+    
+    int** MAP1;
+    
+    
+    int map[N][N];
     Map();
     void draw(sf::RenderWindow* window);
+    
+    void createmaze(int ) {
+        
+    }
+    
+    void mazemake(int height, int width){
+        int x, y, c, a;
+        //bool b;
+        
+        MAP1 = new int*[height];
+        for(int i = 0; i < height; i++)
+            MAP1[i] = new int[width];
+        //
+        for(int i = 0; i < height; i++) // ћассив заполн€етс€ ноликами
+            for(int j = 0; j < width; j++)
+                MAP1[i][j] = wall;
+        //
+        x = 3; y = 3; a = 0; // “очка начала и счетчик
+        while(a < 10000){ // ???????костыль
+            MAP1[y][x] = pass;
+            a++;
+            while(1){ // Ѕесконечный цикл, который прерываетс€ только тупиком
+                c = rand()%4; //  алгоритм проходит
+                switch(c){  // по две клетки в одном направлении за прыжок
+                    case 0: if(y != 1)
+                        if(MAP1[y-2][x] == wall){ // ¬верх
+                            MAP1[y-1][x] = pass;
+                            MAP1[y-2][x] = pass;
+                            y-=2;
+                        }
+                    case 1: if(y != height-2)
+                        if(MAP1[y+2][x] == wall){ // ¬низ
+                            MAP1[y+1][x] = pass;
+                            MAP1[y+2][x] = pass;
+                            y+=2;
+                        }
+                    case 2: if(x != 1)
+                        if(MAP1[y][x-2] == wall){ // Ќалево
+                            MAP1[y][x-1] = pass;
+                            MAP1[y][x-2] = pass;
+                            x-=2;
+                        }
+                    case 3: if(x != width-2)
+                        if(MAP1[y][x+2] == wall){ // Ќаправо
+                            MAP1[y][x+1] = pass;
+                            MAP1[y][x+2] = pass;
+                            x+=2;
+                        }
+                }
+                if(deadend(x,y,MAP1,height,width))
+                    break;
+            }
+            
+            if(deadend(x,y,MAP1,height,width)) // ¬ытаскиваем алгоритм из тупика
+                do {
+                    x = 2*(rand()%((width-1)/2))+1;
+                    y = 2*(rand()%((height-1)/2))+1;
+                }
+            while(MAP1[y][x] != pass);
+        }
+        
+    };
+    
+    
+    bool deadend(int x, int y, int** maze, int height, int width){
+        int a = 0;
+        
+        if(x != 1){
+            if(maze[y][x-2] == pass)
+                a+=1;
+        }
+        else a+=1;
+        
+        if(y != 1){
+            if(maze[y-2][x] == pass)
+                a+=1;
+        }
+        else a+=1;
+        
+        if(x != width-2){
+            if(maze[y][x+2] == pass)
+                a+=1;
+        }
+        else a+=1;
+        
+        if(y != height-2){
+            if(maze[y+2][x] == pass)
+                a+=1;
+        }
+        else a+=1;
+        
+        if(a == 4)
+            return 1;
+        else
+            return 0;
+    }
 };
+
+
 
 Map::Map()
 {
+    //int** MAP1 = mazemake(<#int height#>, <#int width#>);
+    //    for(int i = 0; i < N; i++)
+    //    {
+    //        for(int j = 0; j < N; j++)
+    //        {
+    //            MAP1[i][j] = **(mazemake(height, width));
+    //        }
+    //    }
+    
+    
+    mazemake(height,width);
+    
+    
     for(int i = 0; i < N; i++)
     {
         for(int j = 0; j < N; j++)
         {
-            map[i][j] = MAP[i][j];
+            MAP0[i][j] = MAP1[i][j];
+            map[i][j] = MAP1[i][j];
         }
     }
 }
@@ -117,6 +239,8 @@ void Map::draw(sf::RenderWindow* window)
 
 #endif /* Map_h */
 
+
+//#include "Dots.h"
 #ifndef Dots_h
 #define Dots_h
 
@@ -135,7 +259,7 @@ Dots::Dots()
     {
         for(int j = 0; j < N; j++)
         {
-            map[i][j] = MAP[i][j];
+            map[i][j] = MAP0[i][j];
         }
     }
 }
@@ -174,6 +298,7 @@ void Dots::check(int i, int j)
 
 #endif /* Dots_h */
 
+//#include "Pacman.h"
 #ifndef Pacman_h
 #define Pacman_h
 
@@ -304,7 +429,7 @@ void Pacman::move(int* move)
     mov = *move;
     switch (*move) {
         case 2:
-            if(MAP[xi - 1][yi] != 1)
+            if(MAP0[xi - 1][yi] != 1)
             {
                 move_left(move);
             }
@@ -314,7 +439,7 @@ void Pacman::move(int* move)
             }
             break;
         case 1:
-            if(MAP[xi][yi + 1] != 1)
+            if(MAP0[xi][yi + 1] != 1)
             {
                 move_down(move);
             }
@@ -324,7 +449,7 @@ void Pacman::move(int* move)
             }
             break;
         case 4:
-            if(MAP[xi + 1][yi] != 1)
+            if(MAP0[xi + 1][yi] != 1)
             {
                 move_right(move);
             }
@@ -334,7 +459,7 @@ void Pacman::move(int* move)
             }
             break;
         case 3:
-            if(MAP[xi][yi - 1] != 1)
+            if(MAP0[xi][yi - 1] != 1)
             {
                 move_up(move);
             }
@@ -351,30 +476,66 @@ void Pacman::move(int* move)
 
 #endif /* Pacman_h */
 
+//#include "Enemy.h"
 #ifndef Enemy_h
 #define Enemy_h
+//class CleverMonster : public Character {
+//    sf::Texture texture;
+//public:
+//    CleverMonster();
+//    void init(int _xi, int _yi);
+//    void draw(sf::RenderWindow* window);
+//    void move_left();
+//    void move_down();
+//    void move_right();
+//    void move_up();
+//    void move(int p_xi, int p_yi);
+//    void check_fail(double p_x, double p_y);
+//};
+//
+//CleverMonster::CleverMonster() {
+//    r = X/2;
+//    count = 100;
+//    mov = 0;
+//    texture.loadFromFile("/Users/vadimsorokin/Documents/pacman/res/ghost.jpeg", sf::IntRect(0, 0, 500, 500));
+//}
 
 class Enemy : public Character
 {
-    sf::Texture texture;
-public:
-    Enemy();
-    void init(int _xi, int _yi);
-    void draw(sf::RenderWindow* window);
+private:
+    //int ans[];
+    int disgrace;
+    bool looking();
+    int pifagor(int p_xi, int p_yi, int dx, int dy);
     void move_left();
     void move_down();
     void move_right();
     void move_up();
+    bool move_simple(int dr);
+    sf::Texture texture1;
+    sf::Texture texture2;
+public:
+    Enemy();
+    int good_way(int p_xi, int p_yi, int n);
+    void init(int _xi, int _yi);
+    void draw(sf::RenderWindow* window);
     void move(int p_xi, int p_yi);
     void check_fail(double p_x, double p_y);
+    
+    void make_disgrace()
+    {
+        disgrace = 1000;
+    }
 };
 
 Enemy::Enemy()
 {
     r = X/2;
     count = 100;
-    mov = 0;
-    texture.loadFromFile("res/ghost.jpeg", sf::IntRect(0, 0, 500, 500));
+    mov = 20;
+    texture1.loadFromFile("res/ghost.jpeg", sf::IntRect(0, 0, 500, 500));
+    texture2.loadFromFile("res/ghost2.jpeg", sf::IntRect(0, 0, 500, 500));
+    disgrace = 0;
 }
 void Enemy::init(int _xi, int _yi)
 {
@@ -382,7 +543,12 @@ void Enemy::init(int _xi, int _yi)
     xi = _xi;
     y = _yi*X + X/2;
     yi = _yi;
+    
+    count = 100;
+    mov = 21;
 }
+
+
 void Enemy::draw(sf::RenderWindow* window)
 {
     sf::RectangleShape shape;
@@ -390,9 +556,13 @@ void Enemy::draw(sf::RenderWindow* window)
     //shape.setFillColor(sf::Color::Red);
     shape.setPosition(x, y);
     shape.setOrigin(r, r);
-    shape.setTexture(&texture);
+    if (disgrace == 0)
+        shape.setTexture(&texture1);
+    else
+        shape.setTexture(&texture2);
     window -> draw(shape);
 }
+
 void Enemy::move_left()
 {
     if(count > 0)
@@ -404,8 +574,9 @@ void Enemy::move_left()
     {
         --xi;
         count = 100;
-        mov = 0;
+        mov += 20;
     }
+    //cout<<"done";
     
 }
 void Enemy::move_down()
@@ -419,7 +590,7 @@ void Enemy::move_down()
     {
         ++yi;
         count = 100;
-        mov = 0;
+        mov += 20;
     }
     
 }
@@ -434,7 +605,7 @@ void Enemy::move_right()
     {
         ++xi;
         count = 100;
-        mov = 0;
+        mov += 20;
     }
     
 }
@@ -449,61 +620,179 @@ void Enemy::move_up()
     {
         --yi;
         count = 100;
-        mov = 0;
+        mov += 20;
     }
     
 }
+
+bool Enemy::looking()
+{
+    bool rb = 1;
+    if (((MAP0[xi - 1][yi] == 1) && (MAP0[xi + 1][yi] == 1)) && ((MAP0[xi][yi - 1] == 0) && (MAP0[xi][yi + 1] == 0))) rb = 0;
+    if (((MAP0[xi - 1][yi] == 0) && (MAP0[xi + 1][yi] == 0)) && ((MAP0[xi][yi - 1] == 1) && (MAP0[xi][yi + 1] == 1))) rb = 0;
+    return rb;
+}
+
+int Enemy::pifagor(int p_xi, int p_yi, int dx, int dy)
+{
+    int real_length;
+    real_length = (p_xi - xi)*(p_xi - xi) + (p_yi - yi)*(p_yi - yi);
+    int future_length;
+    future_length = (p_xi - xi - dx)*(p_xi - xi - dx) + (p_yi - yi - dy)*(p_yi - yi - dy);
+    return real_length - future_length;
+}
+
+int comp(const void *i, const void *j)
+{
+    return *(int*)i - *(int*)j;
+}
+
+int Enemy::good_way(int p_xi, int p_yi, int n)
+{
+    int dl = - 1e6;
+    int ans[4];
+    int pif[4];
+    pif[0] =  pifagor(p_xi, p_yi, 0, - 1);
+    pif[1] =  pifagor(p_xi, p_yi, 0,   1);
+    pif[2] =  pifagor(p_xi, p_yi, 1,   0);
+    pif[3] =  pifagor(p_xi, p_yi,-1,   0);
+    
+    for (int i = 0; i < 4; i ++)
+        if (pif[i] > dl) {ans[0] = i + 1; dl = pif[i];}
+    dl = - 1e6;
+    for (int i = 0; i < 4; i ++)
+        if ((pif[i] > dl) && (i != ans[0] - 1)) {ans[1] = i + 1; dl = pif[i];}
+    dl = - 1e6;
+    for (int i = 0; i < 4; i ++)
+        if ((pif[i] > dl) && (i != ans[0] - 1) && (i != ans[1] - 1)) {ans[2] = i + 1; dl = pif[i];}
+    dl = - 1e6;
+    for (int i = 0; i < 4; i ++)
+        if ((pif[i] > dl) && (i != ans[0] - 1) && (i != ans[1] - 1) && (i != ans[2] - 1)) {ans[3] = i + 1; dl = pif[i];}
+    return ans[n];
+}
+
+bool Enemy::move_simple(int dr)
+{
+    bool ret = 0;
+    if((dr == 1) && (MAP0[xi][yi - 1] != 1) && (MAP0[xi][yi - 1] != 9))
+    {
+        mov = 1;
+        move_up();
+        ret = 1;
+    }
+    if((dr == 2) && MAP0[xi][yi + 1] != 1 && MAP0[xi][yi + 1] != 9)
+    {
+        mov = 2;
+        move_down();
+        ret = 1;
+    }
+    if((dr == 3) && MAP0[xi + 1][yi] != 1 && MAP0[xi + 1][yi] != 9)
+    {
+        mov = 3;
+        move_right();
+        ret = 1;
+    }
+    if((dr == 4)  && MAP0[xi - 1][yi] != 1 && MAP0[xi - 1][yi] != 9)
+    {
+        mov = 4;
+        move_left();
+        ret = 1;
+    }
+    return ret;
+    
+}
+
 void Enemy::move(int p_xi, int p_yi)
 {
-    if(mov == 0)
+    if (disgrace == 0)
     {
-        if(p_yi - yi < 0 && MAP[xi][yi - 1] != 1)
+        if (mov > 10)
         {
-            mov = 1;
-            move_up();
+            if (looking() == 1)
+            {
+                bool a228 = 0;
+                for (int i = 0; i < 4; i ++)
+                    if (a228 == 0)
+                    {
+                        int gw = good_way(p_xi, p_yi, i);
+                        a228 = move_simple(gw);
+                    }
+            }
+            else
+            {
+                mov -= 10;
+            }
         }
-        else if(p_yi - yi > 0 && MAP[xi][yi + 1] != 1)
+        else
         {
-            mov = 2;
-            move_down();
-        }
-        else if(p_xi - xi > 0 && MAP[xi + 1][yi] != 1)
-        {
-            mov = 3;
-            move_right();
-        }
-        else if(p_xi - xi < 0 && MAP[xi - 1][yi] != 1)
-        {
-            mov = 4;
-            move_left();
+            switch (mov) {
+                case 1:
+                    move_up();
+                    break;
+                case 2:
+                    move_down();
+                    break;
+                case 3:
+                    move_right();
+                    break;
+                case 4:
+                    move_left();
+                    break;
+                    
+                default:
+                    break;
+            }
         }
     }
     else
     {
-        switch (mov) {
-            case 1:
-                move_up();
-                break;
-            case 2:
-                move_down();
-                break;
-            case 3:
-                move_right();
-                break;
-            case 4:
-                move_left();
-                break;
-                
-            default:
-                break;
+        disgrace--;
+        if (mov > 10)
+        {
+            if (looking() == 1)
+            {
+                bool a228 = 0;
+                while (a228 == 0)
+                {
+                    a228 = move_simple(rand()%4 + 1);
+                }
+            }
+            else
+            {
+                mov -= 10;
+            }
         }
+        else
+        {
+            switch (mov) {
+                case 1:
+                    move_up();
+                    break;
+                case 2:
+                    move_down();
+                    break;
+                case 3:
+                    move_right();
+                    break;
+                case 4:
+                    move_left();
+                    break;
+                    
+                default:
+                    break;
+            }
+        }
+        
     }
 }
 void Enemy::check_fail(double p_x, double p_y)
 {
     if(pow(p_x - x, 2) + pow(p_y - y, 2) < X*X/4)
     {
-        fail = 1;
+        if (disgrace == 0)
+            fail = 1;
+        else
+            init((N - 1)/2, (N - 1)/2);
     }
 }
 
@@ -512,6 +801,7 @@ void Enemy::check_fail(double p_x, double p_y)
 
 int main()
 {
+    srand((unsigned)time(NULL));
     sf::Clock clock;
     double time = 0;
     
@@ -534,10 +824,10 @@ int main()
     sf::RenderWindow window(sf::VideoMode(X*N, X*N + 100), "Packman");
     
     sf::Font font;
-    if (!font.loadFromFile("res/arial.ttf"))
-    {
-        return 1;
-    }
+    //    if (!font.loadFromFile("/Users/vadimsorokin/Documents/pacman/res/arial.ttf"))
+    //    {
+    //        return 1;
+    //    }
     sf::Text text;
     text.setFont(font);
     text.setCharacterSize(50);
@@ -658,7 +948,5 @@ int main()
         window.display();
     }
     
-    return EXIT_SUCCESS;
+    return 0;
 }
-
-
